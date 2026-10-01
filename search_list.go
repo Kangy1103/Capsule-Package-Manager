@@ -4,6 +4,7 @@ import (
 	"charm.land/bubbles/v2/list"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 )
 
 type searchItem struct {
@@ -19,13 +20,38 @@ type model struct {
 	packagesList []DetailedPackageInfo
 }
 
+const (
+	maxListWidth  = 80
+	maxListHeight = 40
+)
+
+func searchListSize(termWidth, termHeight int) (int, int) {
+	listWidth := termWidth - 8
+	listHeight := termHeight - 8
+
+	if listWidth > maxListWidth {
+		listWidth = maxListWidth
+	}
+	if listHeight > maxListHeight {
+		listHeight = maxListHeight
+	}
+	if listWidth < 1 {
+		listWidth = 1
+	}
+	if listHeight < 1 {
+		listHeight = 1
+	}
+
+	return listWidth, listHeight
+}
+
 func SearchList(packages []DetailedPackageInfo) model {
 	items := []list.Item{}
-
+	log.Debug("Compiling search results")
 	for _, packageInfo := range packages {
 		items = append(items, searchItem{packageInfo: packageInfo})
 	}
-	l := list.New(items, list.NewDefaultDelegate(), 80, 20)
+	l := list.New(items, list.NewDefaultDelegate(), maxListWidth, maxListHeight)
 	l.Title = "Capsule Search"
 
 	return model{list: l, packagesList: packages}
@@ -63,16 +89,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		switch keypress := msg.String(); keypress {
 		case "q", "ctrl+c":
+			log.Debug("Quitting Capsule")
 			return m, tea.Quit
 		case "esc":
 			if m.showDetails {
+				log.Debug("Returning to search list")
 				m.showDetails = false
 			} else {
+				log.Debug("Quitting Capsule")
 				return m, tea.Quit
 			}
 		case "enter":
 			_, ok := m.list.SelectedItem().(searchItem)
 			if ok {
+				log.Debug("Opening package details")
 				m.detail, _ = DetailView(m.packagesList, m.list.GlobalIndex(), m.termWidth, m.termHeight)
 				m.showDetails = true
 			}
@@ -86,17 +116,25 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	} else {
 		m.list, cmd = m.list.Update(msg)
+		listWidth, listHeight := searchListSize(m.termWidth, m.termHeight)
+		m.list.SetWidth(listWidth)
+		m.list.SetHeight(listHeight)
 		return m, cmd
 	}
 }
 
 func (m model) View() tea.View {
+	listWidth, _ := searchListSize(m.termWidth, m.termHeight)
+	listContent := lipgloss.NewStyle().
+		Width(listWidth).
+		Render(m.list.View())
+
 	list := lipgloss.Place(
 		m.termWidth,
 		m.termHeight,
 		lipgloss.Center,
 		lipgloss.Center,
-		m.list.View(),
+		listContent,
 	)
 	if m.showDetails {
 		detailsView := m.detail.View()
@@ -119,42 +157,3 @@ func (m model) View() tea.View {
 		return listView
 	}
 }
-
-/*
-delegate := list.NewDefaultDelegate()
-	delegate.SetHeight(3)
-	delegate.SetSpacing(1)
-	delegate.Styles.NormalTitle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#e2e8f0")).
-		PaddingLeft(2)
-	delegate.Styles.NormalDesc = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#94a3b8")).
-		PaddingLeft(2)
-	delegate.Styles.SelectedTitle = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#f9a8d4")).
-		Border(lipgloss.NormalBorder(), false, false, false, true).
-		BorderForeground(lipgloss.Color("#5eead4")).
-		PaddingLeft(1)
-	delegate.Styles.SelectedDesc = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#5eead4")).
-		Border(lipgloss.NormalBorder(), false, false, false, true).
-		BorderForeground(lipgloss.Color("#5eead4")).
-		PaddingLeft(1)
-
-	l := list.New(items, delegate, 80, 20)
-	styles := list.DefaultStyles(true)
-	styles.TitleBar = lipgloss.NewStyle().PaddingLeft(2)
-	styles.Title = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#151827")).
-		Background(lipgloss.Color("#a78bfa")).
-		Padding(0, 1)
-	styles.StatusBar = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#94a3b8")).
-		PaddingLeft(2)
-	styles.HelpStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#94a3b8")).
-		Padding(1, 0, 0, 2)
-	l.Styles = styles
-	l.Title = "✦ Capsule Search" */
