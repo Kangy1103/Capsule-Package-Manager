@@ -6,6 +6,7 @@ import (
 	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 )
 
 type detailModel struct {
@@ -78,6 +79,7 @@ func (m detailModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "esc":
 			if m.standalone {
+				log.Debug("Closing standalone detailed package view")
 				return m, tea.Quit
 			}
 		}
@@ -103,18 +105,34 @@ func (m detailModel) View() tea.View {
 	header := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(lipgloss.Color(titleColour)).
+		Background(lipgloss.Color(panelBackground)).
+		Width(m.panelWidth - 6).
 		Render("  Capsule Package Details")
 
 	meta := lipgloss.NewStyle().
 		Foreground(lipgloss.Color(accentColour)).
+		Background(lipgloss.Color(panelBackground)).
+		Width(m.panelWidth - 6).
 		Render("  " + m.packageName + "  •  " + m.repo)
 
 	body := lipgloss.NewStyle().
 		Foreground(lipgloss.Color(textColour)).
+		Background(lipgloss.Color(panelBackground)).
+		Width(m.panelWidth - 6).
 		Render(m.viewport.View())
+
+	resultsString := fmt.Sprintf("%v / %v", m.selectedRepo+1, len(m.packagesList))
+	resultsCounter := lipgloss.NewStyle().
+		Foreground(lipgloss.Color(mutedColour)).
+		Background(lipgloss.Color(panelBackground)).
+		Width(m.panelWidth - 6).
+		Align(lipgloss.Center).
+		Render(resultsString)
 
 	footer := lipgloss.NewStyle().
 		Foreground(lipgloss.Color(mutedColour)).
+		Background(lipgloss.Color(panelBackground)).
+		Width(m.panelWidth - 6).
 		Render("  <-/-> to switch repo  •  q/ctrl-c to quit  •  Esc to close panel")
 
 	content := lipgloss.JoinVertical(
@@ -123,6 +141,7 @@ func (m detailModel) View() tea.View {
 		meta,
 		"",
 		body,
+		resultsCounter,
 		"",
 		footer,
 	)

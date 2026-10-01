@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/log/v2"
 	"golang.org/x/term"
 )
 
@@ -14,6 +15,7 @@ func BasicPackageSearch(SearchTerm string, BasicPackageInfo []DetailedPackageInf
 	searchResults := PackageSearchLoop(SearchTerm, BasicPackageInfo)
 	tuiList := SearchList(searchResults)
 	tui := tea.NewProgram(tuiList)
+	log.Debug("Opening search list")
 	tui.Run()
 }
 
@@ -32,6 +34,7 @@ func DetailedPackageSearch(SearchTerm string, DetailedPackageInfo []DetailedPack
 	}
 	detailView.standalone = true
 
+	log.Debug("Opening detailed package view")
 	tea.NewProgram(detailView).Run()
 
 	/*for i, packageName := range DetailedPackageInfo {
@@ -62,9 +65,10 @@ func DetailedPackageSearch(SearchTerm string, DetailedPackageInfo []DetailedPack
 }
 
 func PackageSearchLoop(SearchTerm string, BasicPackageInfo []DetailedPackageInfo) []DetailedPackageInfo {
+	log.Info("Searching for package", "package", SearchTerm)
 	searchResults := []DetailedPackageInfo{}
 	for i, packageName := range BasicPackageInfo {
-		if packageName.Name == SearchTerm {
+		if packageName.Name == SearchTerm || strings.Contains(packageName.Desc, SearchTerm) {
 			searchResults = append(searchResults, BasicPackageInfo[i])
 			/*fmt.Printf("Name: %s\nVersion: %s\nRepo: %s\nDescription: %s\n",
 				BasicPackageInfo[i].Name,
