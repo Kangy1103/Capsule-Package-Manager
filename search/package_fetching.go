@@ -1,15 +1,18 @@
-package main
+// Package search is where the searching stuff lives
+package search
 
 import (
 	"fmt"
 	"strings"
 
+	"capsule-package-manager/models"
+
 	"github.com/Jguer/go-alpm/v2"
 	pacmanconf "github.com/Morganamilo/go-pacmanconf"
 )
 
-func FetchPackages() ([]DetailedPackageInfo, error) {
-	PackageInfo := []DetailedPackageInfo{}
+func FetchPackages() ([]models.PackageInfo, error) {
+	PackageInfo := []models.PackageInfo{}
 
 	// This part initialises a libalpm handle for the pacman database path
 	handle, err := alpm.Initialize("/", "/var/lib/pacman/")
@@ -20,7 +23,7 @@ func FetchPackages() ([]DetailedPackageInfo, error) {
 	// This is parsing the pacman.conf using go-pacmanconf
 	conf, _, err := pacmanconf.ParseFile("/etc/pacman.conf")
 	if err != nil {
-		return []DetailedPackageInfo{}, fmt.Errorf("pacman.conf not found: %s", err)
+		return []models.PackageInfo{}, fmt.Errorf("pacman.conf not found: %s", err)
 	}
 
 	// This is looping over the repos to register the defined repos in pacman.conf for libalpm
@@ -47,27 +50,30 @@ func FetchPackages() ([]DetailedPackageInfo, error) {
 
 		// Formats the packages for Capsule to understand: IPackage to BasicPackageInfo
 		for _, pkg := range packages.Slice() {
-			PackageInfo = append(PackageInfo, DetailedPackageInfo{
-				BasicPackageInfo: BasicPackageInfo{
-					Name:    pkg.Name(),
-					Version: pkg.Version(),
-					Desc:    pkg.Description(),
-					Repo:    db.Name(),
+			PackageInfo = append(PackageInfo, models.PackageInfo{
+				DetailedPackageInfo: models.DetailedPackageInfo{
+					BasicPackageInfo: models.BasicPackageInfo{
+						Name:    pkg.Name(),
+						Version: pkg.Version(),
+						Desc:    pkg.Description(),
+						Repo:    db.Name(),
+					},
+					Architecture:  pkg.Architecture(),
+					URL:           pkg.URL(),
+					Licenses:      strings.Join(pkg.Licenses().Slice(), "  "),
+					Groups:        strings.Join(pkg.Groups().Slice(), "  "),
+					Provides:      formatDependencies(pkg.Provides()),
+					DependsOn:     formatDependencies(pkg.Depends()),
+					OptionalDeps:  formatDependencies(pkg.OptionalDepends()),
+					ConflictsWith: formatDependencies(pkg.Conflicts()),
+					Replaces:      formatDependencies(pkg.Replaces()),
+					DownloadSize:  formatFileSize(pkg.Size()),
+					InstalledSize: formatFileSize(pkg.ISize()),
+					Packager:      pkg.Packager(),
+					BuildDate:     pkg.BuildDate().Format("Mon 02 Jan 2006 15:04:05 MST"),
+					ValidatedBy:   formatValidatedBy(pkg.Validation()),
 				},
-				Architecture:  pkg.Architecture(),
-				URL:           pkg.URL(),
-				Licenses:      strings.Join(pkg.Licenses().Slice(), "  "),
-				Groups:        strings.Join(pkg.Groups().Slice(), "  "),
-				Provides:      formatDependencies(pkg.Provides()),
-				DependsOn:     formatDependencies(pkg.Depends()),
-				OptionalDeps:  formatDependencies(pkg.OptionalDepends()),
-				ConflictsWith: formatDependencies(pkg.Conflicts()),
-				Replaces:      formatDependencies(pkg.Replaces()),
-				DownloadSize:  formatFileSize(pkg.Size()),
-				InstalledSize: formatFileSize(pkg.ISize()),
-				Packager:      pkg.Packager(),
-				BuildDate:     pkg.BuildDate().Format("Mon 02 Jan 2006 15:04:05 MST"),
-				ValidatedBy:   formatValidatedBy(pkg.Validation()),
+				Source: pkg,
 			})
 		}
 	}

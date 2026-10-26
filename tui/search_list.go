@@ -1,6 +1,8 @@
-package main
+package tui
 
 import (
+	"capsule-package-manager/models"
+
 	"charm.land/bubbles/v2/list"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -8,16 +10,16 @@ import (
 )
 
 type searchItem struct {
-	packageInfo DetailedPackageInfo
+	packageInfo models.DetailedPackageInfo
 }
 
-type model struct {
+type Model struct {
 	list         list.Model
-	detail       detailModel
+	detail       DetailModel
 	showDetails  bool
 	termWidth    int
 	termHeight   int
-	packagesList []DetailedPackageInfo
+	packagesList []models.DetailedPackageInfo
 }
 
 const (
@@ -45,7 +47,7 @@ func searchListSize(termWidth, termHeight int) (int, int) {
 	return listWidth, listHeight
 }
 
-func SearchList(packages []DetailedPackageInfo) model {
+func SearchList(packages []models.DetailedPackageInfo) Model {
 	items := []list.Item{}
 	log.Debug("Compiling search results")
 	for _, packageInfo := range packages {
@@ -54,7 +56,7 @@ func SearchList(packages []DetailedPackageInfo) model {
 	l := list.New(items, list.NewDefaultDelegate(), maxListWidth, maxListHeight)
 	l.Title = "Capsule Search"
 
-	return model{list: l, packagesList: packages}
+	return Model{list: l, packagesList: packages}
 }
 
 func (i searchItem) Title() string {
@@ -77,11 +79,11 @@ func (i searchItem) FilterValue() string {
 	return i.packageInfo.Name
 }
 
-func (m model) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.termWidth = msg.Width
@@ -112,7 +114,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	if m.showDetails {
 		detail, cmd := m.detail.Update(msg)
-		m.detail = detail.(detailModel)
+		m.detail = detail.(DetailModel)
 		return m, cmd
 	} else {
 		m.list, cmd = m.list.Update(msg)
@@ -123,7 +125,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) View() tea.View {
+func (m Model) View() tea.View {
 	listWidth, _ := searchListSize(m.termWidth, m.termHeight)
 	listContent := lipgloss.NewStyle().
 		Width(listWidth).

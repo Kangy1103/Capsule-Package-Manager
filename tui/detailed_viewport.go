@@ -1,7 +1,10 @@
-package main
+// Package tui build the capsule tui
+package tui
 
 import (
 	"fmt"
+
+	"capsule-package-manager/models"
 
 	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
@@ -9,39 +12,39 @@ import (
 	"charm.land/log/v2"
 )
 
-type detailModel struct {
+type DetailModel struct {
 	viewport     viewport.Model
 	lineCount    int
 	panelWidth   int
 	panelHeight  int
 	packageName  string
 	repo         string
-	packagesList []DetailedPackageInfo
+	packagesList []models.DetailedPackageInfo
 	selectedRepo int
 	termWidth    int
 	termHeight   int
-	standalone   bool
+	Standalone   bool
 }
 
-func DetailView(packageInfo []DetailedPackageInfo, selectedRepo, width, height int) (detailModel, error) {
+func DetailView(packageInfo []models.DetailedPackageInfo, selectedRepo, width, height int) (DetailModel, error) {
 	viewPort := viewport.New()
-	initialValues := detailModel{
+	initialValues := DetailModel{
 		viewport:     viewPort,
 		packagesList: packageInfo,
 		selectedRepo: selectedRepo,
 	}
 	err := initialValues.DetailedViewUpdate(width, height)
 	if err != nil {
-		return detailModel{}, fmt.Errorf("unable to update viewport: %s", err)
+		return DetailModel{}, fmt.Errorf("unable to update viewport: %s", err)
 	}
 	return initialValues, nil
 }
 
-func (m *detailModel) DetailedViewUpdate(width, height int) error {
+func (m *DetailModel) DetailedViewUpdate(width, height int) error {
 	m.termWidth, m.termHeight = width, height
 	viewPortWidth := detailPanelWidth(width) - 6
 	selectedPackage := m.packagesList[m.selectedRepo]
-	formattedPackage, err := DetailedPackageOutput(selectedPackage.Name, []DetailedPackageInfo{m.packagesList[m.selectedRepo]}, viewPortWidth)
+	formattedPackage, err := DetailedPackageOutput(selectedPackage.Name, []models.DetailedPackageInfo{m.packagesList[m.selectedRepo]}, viewPortWidth)
 	if err != nil {
 		return fmt.Errorf("unable to format package: %s | %s", selectedPackage.Name, err)
 	}
@@ -55,7 +58,7 @@ func (m *detailModel) DetailedViewUpdate(width, height int) error {
 	return nil
 }
 
-func (m detailModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m DetailModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.termWidth, m.termHeight = msg.Width, msg.Height
@@ -78,7 +81,7 @@ func (m detailModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "q", "ctrl+c":
 			return m, tea.Quit
 		case "esc":
-			if m.standalone {
+			if m.Standalone {
 				log.Debug("Closing standalone detailed package view")
 				return m, tea.Quit
 			}
@@ -88,11 +91,11 @@ func (m detailModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m detailModel) Init() tea.Cmd {
+func (m DetailModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m detailModel) View() tea.View {
+func (m DetailModel) View() tea.View {
 	const (
 		panelBackground = "#151827"
 		panelBorder     = "#a78bfa"
@@ -156,7 +159,7 @@ func (m detailModel) View() tea.View {
 		Height(m.panelHeight).
 		Render(content)
 
-	if m.standalone {
+	if m.Standalone {
 		centeredModal := lipgloss.Place(m.termWidth, m.termHeight, lipgloss.Center, lipgloss.Center, modal)
 		standaloneView := tea.NewView(centeredModal)
 		standaloneView.AltScreen = true
