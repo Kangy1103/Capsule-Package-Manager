@@ -58,7 +58,7 @@ func main() {
 			search.DetailedPackageSearch(SearchTerm, detailedInfo)
 		}
 	default:
-		fmt.Println("Please choose a command")
+		fmt.Printf("unknown command: %v\n", cmd)
 	}
 }
 
