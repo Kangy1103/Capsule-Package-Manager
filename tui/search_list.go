@@ -7,10 +7,21 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"charm.land/log/v2"
+	"github.com/Jguer/go-alpm/v2"
+)
+
+const (
+	ColorPrimary      = "#ff5555"
+	HighlightColour   = "#ff5555"
+	DescriptionColour = "#94a3b8"
+	ColorText         = "#f8f9fa"
+	ColorMuted        = "#6272a4"
+	ColorBg           = "#151827"
 )
 
 type searchItem struct {
 	packageInfo models.DetailedPackageInfo
+	installed   bool
 }
 
 type Model struct {
@@ -49,17 +60,62 @@ func searchListSize(termWidth, termHeight int) (int, int) {
 
 func SearchList(packages []models.DetailedPackageInfo) Model {
 	items := []list.Item{}
+	installedPackages := installedPackageNames()
+
 	log.Debug("Compiling search results")
 	for _, packageInfo := range packages {
-		items = append(items, searchItem{packageInfo: packageInfo})
+		items = append(items, searchItem{
+			packageInfo: packageInfo,
+			installed:   installedPackages[packageInfo.Name],
+		})
 	}
-	l := list.New(items, list.NewDefaultDelegate(), maxListWidth, maxListHeight)
+
+	// SearchList styling here
+	delegate := list.NewDefaultDelegate()
+	delegate.Styles.SelectedTitle = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color(HighlightColour))
+
+	delegate.Styles.SelectedDesc = lipgloss.NewStyle().
+		Foreground(lipgloss.Color(ColorMuted))
+
+	delegate.Styles.NormalTitle = lipgloss.NewStyle().
+		Foreground(lipgloss.Color(ColorText))
+
+	delegate.Styles.NormalDesc = lipgloss.NewStyle().
+		Foreground(lipgloss.Color(DescriptionColour))
+
+	l := list.New(items, delegate, maxListWidth, maxListHeight)
 	l.Title = "Capsule Search"
+
+	styles := list.DefaultStyles(true)
+
+	// Title bar styling
+	styles.Title = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("#151827")).
+		Background(lipgloss.Color(ColorPrimary)).
+		Padding(0, 1)
+
+	// Status bar / pagination counter styling
+	styles.StatusBar = lipgloss.NewStyle().
+		Foreground(lipgloss.Color(ColorMuted)).
+		PaddingLeft(2)
+
+	// Help keys styling (bottom text)
+	styles.HelpStyle = lipgloss.NewStyle().
+		Foreground(lipgloss.Color(ColorMuted)).
+		Padding(1, 0, 0, 2)
+
+	l.Styles = styles
 
 	return Model{list: l, packagesList: packages}
 }
 
 func (i searchItem) Title() string {
+	if i.installed {
+		return i.packageInfo.Name + " [Installed]"
+	}
 	return i.packageInfo.Name
 }
 
@@ -158,4 +214,23 @@ func (m Model) View() tea.View {
 		listView.AltScreen = true
 		return listView
 	}
+}
+
+func installedPackageNames() map[string]bool {
+	installedPackages := map[string]bool{}
+	handle, err := alpm.Initialize("/", "/var/lib/pacman/")
+	if err != nil {
+		return installedPackages
+	}
+	defer handle.Release()
+
+	localDB, err := handle.LocalDB()
+	if err != nil {
+		return installedPackages
+	}
+
+	for _, packageInfo := range localDB.PkgCache().Slice() {
+		installedPackages[packageInfo.Name()] = true
+	}
+	return installedPackages
 }
