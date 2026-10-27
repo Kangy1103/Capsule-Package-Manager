@@ -75,7 +75,7 @@ func PackageSearchLoop(SearchTerm string, BasicPackageInfo []models.DetailedPack
 	log.Info("Searching for package", "package", SearchTerm)
 	searchResults := []models.DetailedPackageInfo{}
 	for i, packageName := range BasicPackageInfo {
-		if packageName.Name == SearchTerm || strings.Contains(packageName.Desc, SearchTerm) {
+		if strings.Contains(packageName.Name, SearchTerm) || strings.Contains(packageName.Desc, SearchTerm) {
 			searchResults = append(searchResults, BasicPackageInfo[i])
 			/*fmt.Printf("Name: %s\nVersion: %s\nRepo: %s\nDescription: %s\n",
 				BasicPackageInfo[i].Name,
