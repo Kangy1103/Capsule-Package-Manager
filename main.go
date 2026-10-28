@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"capsule-package-manager/models"
+	packagemanagement "capsule-package-manager/package_management"
 	"capsule-package-manager/search"
 
 	"charm.land/log/v2"
@@ -20,7 +20,7 @@ func main() {
 	}
 	logger, closeLog, err := Logging()
 	if err != nil {
-		fmt.Println("unable to start logger")
+		fmt.Printf("unable to start logger: %v\n", err)
 		return
 	}
 	defer closeLog()
@@ -35,27 +35,28 @@ func main() {
 		if cmd == "version" {
 			fmt.Println("Capsule v0.0.4")
 		}
-	case "search", "details":
+
+	case "search", "details", "install", "uninstall":
 		if len(os.Args) < 3 {
-			fmt.Println("Please provide a package name to search")
+			fmt.Println("Please provide a package name")
 			return
 		}
 		SearchTerm := os.Args[2]
 
-		PackageInfo, err := search.FetchPackages()
+		PackageInfo, handle, err := search.FetchPackages()
 		if err != nil {
-			log.Errorf("unable to fetch packages: %v", err)
+			log.Error("unable to fetch packages", "search", err)
 			return
 		}
-
-		detailedInfo := make([]models.DetailedPackageInfo, 0, len(PackageInfo))
-		for _, pkg := range PackageInfo {
-			detailedInfo = append(detailedInfo, pkg.DetailedPackageInfo)
-		}
-		if cmd == "search" {
-			search.BasicPackageSearch(SearchTerm, detailedInfo)
-		} else {
-			search.DetailedPackageSearch(SearchTerm, detailedInfo)
+		switch cmd {
+		case "search":
+			search.BasicPackageSearch(SearchTerm, PackageInfo)
+		case "details":
+			search.DetailedPackageSearch(SearchTerm, PackageInfo)
+		case "install":
+			packagemanagement.InstallPackage(SearchTerm, handle, PackageInfo)
+		case "uninstall":
+			packagemanagement.UninstallPackage()
 		}
 	default:
 		fmt.Printf("unknown command: %v\n", cmd)
@@ -65,8 +66,9 @@ func main() {
 type closeFunc func() error
 
 func Logging() (*log.Logger, closeFunc, error) {
-	logFile := "logs/capsule.log"
-	err := os.MkdirAll("logs", 0o755)
+	logFolder := "/mnt/Goku/capsule/logs"
+	logFile := "/mnt/Goku/capsule/logs/capsule.log"
+	err := os.MkdirAll(logFolder, 0o755)
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not create log folder: %v", err)
 	}

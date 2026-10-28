@@ -14,18 +14,18 @@ import (
 )
 
 // Real search func but with placeholder code to test functionality before actually searching the repos
-func BasicPackageSearch(SearchTerm string, BasicPackageInfo []models.DetailedPackageInfo) {
+func BasicPackageSearch(SearchTerm string, BasicPackageInfo []models.PackageInfo) {
 	searchResults := PackageSearchLoop(SearchTerm, BasicPackageInfo)
 	tuiList := tui.SearchList(searchResults)
 	tui := tea.NewProgram(tuiList)
 	log.Debug("Opening search list")
 	if _, err := tui.Run(); err != nil {
-		log.Error("could not open TUI: %v", err)
+		log.Error("could not open TUI", "tui", err)
 	}
 }
 
 // Had to do it with seperate print statements as a multi-line print fucked with the formatting. Sadge
-func DetailedPackageSearch(SearchTerm string, DetailedPackageInfo []models.DetailedPackageInfo) error {
+func DetailedPackageSearch(SearchTerm string, DetailedPackageInfo []models.PackageInfo) error {
 	searchResults := PackageSearchLoop(SearchTerm, DetailedPackageInfo)
 
 	width, height, err := term.GetSize(int(os.Stdout.Fd()))
@@ -41,7 +41,7 @@ func DetailedPackageSearch(SearchTerm string, DetailedPackageInfo []models.Detai
 
 	log.Debug("Opening detailed package view")
 	if _, err := tea.NewProgram(detailView).Run(); err != nil {
-		log.Error("could not open detailed search view: %v", err)
+		log.Error("could not open detailed search view", "tui", err)
 	}
 
 	/*for i, packageName := range DetailedPackageInfo {
@@ -71,12 +71,12 @@ func DetailedPackageSearch(SearchTerm string, DetailedPackageInfo []models.Detai
 	return nil
 }
 
-func PackageSearchLoop(SearchTerm string, BasicPackageInfo []models.DetailedPackageInfo) []models.DetailedPackageInfo {
+func PackageSearchLoop(SearchTerm string, packages []models.PackageInfo) []models.DetailedPackageInfo {
 	log.Info("Searching for package", "package", SearchTerm)
 	searchResults := []models.DetailedPackageInfo{}
-	for i, packageName := range BasicPackageInfo {
+	for _, packageName := range packages {
 		if strings.Contains(packageName.Name, SearchTerm) || strings.Contains(packageName.Desc, SearchTerm) {
-			searchResults = append(searchResults, BasicPackageInfo[i])
+			searchResults = append(searchResults, packageName.DetailedPackageInfo)
 			/*fmt.Printf("Name: %s\nVersion: %s\nRepo: %s\nDescription: %s\n",
 				BasicPackageInfo[i].Name,
 				BasicPackageInfo[i].Version,
