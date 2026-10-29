@@ -60,16 +60,14 @@ func InstallPackage(searchTerm string, handle *alpm.Handle, pkgs []models.Packag
 		fmt.Printf(" %s %s\n", pkg.Name(), pkg.Version())
 	}
 	fmt.Println(" ")
-	fmt.Println(" ")
 	removalList := handle.TransGetRemove().Slice()
 	if len(removalList) != 0 {
 		fmt.Println("Package to remove:")
 		for _, pkg := range removalList {
 			fmt.Printf(" %s %s\n", pkg.Name(), pkg.Version())
 		}
+		fmt.Println(" ")
 	}
-	fmt.Println(" ")
-	fmt.Println(" ")
 	fmt.Print("Do you want to proceed? [y/N] ")
 	var response string
 	if _, err := fmt.Scanln(&response); err != nil {
