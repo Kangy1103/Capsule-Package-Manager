@@ -14,6 +14,9 @@ import (
 )
 
 // Real search func but with placeholder code to test functionality before actually searching the repos
+// Filters PackageInfo using SearchTerm and opens the search TUI
+// Called by main() in main.go; passes both to PackageSearchLoop() here
+// Passes searchResults to SearchList() in tui/search_list.go
 func BasicPackageSearch(SearchTerm string, BasicPackageInfo []models.PackageInfo) {
 	searchResults := PackageSearchLoop(SearchTerm, BasicPackageInfo)
 	tuiList := tui.SearchList(searchResults)
@@ -25,6 +28,9 @@ func BasicPackageSearch(SearchTerm string, BasicPackageInfo []models.PackageInfo
 }
 
 // Had to do it with seperate print statements as a multi-line print fucked with the formatting. Sadge
+// Filters packages and opens a standalone detail view
+// Gets SearchTerm and DetailedPackageInfo from main() in main.go
+// Passes searchResults to DetailView() in tui/detailed_viewport.go
 func DetailedPackageSearch(SearchTerm string, DetailedPackageInfo []models.PackageInfo) error {
 	searchResults := PackageSearchLoop(SearchTerm, DetailedPackageInfo)
 
@@ -71,6 +77,9 @@ func DetailedPackageSearch(SearchTerm string, DetailedPackageInfo []models.Packa
 	return nil
 }
 
+// Filters packages by SearchTerm against name and description
+// Gets SearchTerm and packages from both search functions in this file
+// Returns searchResults to the calling search function
 func PackageSearchLoop(SearchTerm string, packages []models.PackageInfo) []models.DetailedPackageInfo {
 	log.Info("Searching for package", "package", SearchTerm)
 	searchResults := []models.DetailedPackageInfo{}
