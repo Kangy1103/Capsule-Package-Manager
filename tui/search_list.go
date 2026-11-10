@@ -38,6 +38,9 @@ const (
 	maxListHeight = 40
 )
 
+// Calculates list dimensions from termWidth and termHeight
+// Called by Model.Update() and Model.View() in search_list.go
+// Returns listWidth and listHeight to the caller
 func searchListSize(termWidth, termHeight int) (int, int) {
 	listWidth := termWidth - 8
 	listHeight := termHeight - 8
@@ -58,6 +61,9 @@ func searchListSize(termWidth, termHeight int) (int, int) {
 	return listWidth, listHeight
 }
 
+// Builds a Bubble Tea list from matching packages
+// Gets packages from BasicPackageSearch() in search/search_packages.go
+// Returns Model to BasicPackageSearch() in search/search_packages.go
 func SearchList(packages []models.DetailedPackageInfo) Model {
 	items := []list.Item{}
 	installedPackages := installedPackageNames()
@@ -112,6 +118,8 @@ func SearchList(packages []models.DetailedPackageInfo) Model {
 	return Model{list: l, packagesList: packages}
 }
 
+// Returns search item title, marking installed packages
+// Called by the Bubble Tea list delegate; uses searchItem.packageInfo
 func (i searchItem) Title() string {
 	if i.installed {
 		return i.packageInfo.Name + " [Installed]"
@@ -119,26 +127,39 @@ func (i searchItem) Title() string {
 	return i.packageInfo.Name
 }
 
+// Returns package description from searchItem.packageInfo
+// Called through searchItem's list item methods
 func (i searchItem) Version() string {
 	return i.packageInfo.Desc
 }
 
+// Returns package description from searchItem.packageInfo
+// Called by the Bubble Tea list delegate
 func (i searchItem) Description() string {
 	return i.packageInfo.Desc
 }
 
+// Returns package repo from searchItem.packageInfo
+// Available to callers of searchItem.Repo()
 func (i searchItem) Repo() string {
 	return i.packageInfo.Repo
 }
 
+// Returns package name for Bubble Tea list filtering
+// Called by the Bubble Tea list
 func (i searchItem) FilterValue() string {
 	return i.packageInfo.Name
 }
 
+// Supplies the initial Bubble Tea command for the search Model
+// Called by Bubble Tea; returns nil
 func (m Model) Init() tea.Cmd {
 	return nil
 }
 
+// Handles keyboard, resize and detail-panel events
+// Gets msg from Bubble Tea; uses DetailView() in detailed_viewport.go
+// Returns updated Model and command to Bubble Tea
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -181,6 +202,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
+// Renders the search list and optional detail overlay
+// Uses Model fields updated by Update() in search_list.go
+// Returns tea.View to Bubble Tea
 func (m Model) View() tea.View {
 	listWidth, _ := searchListSize(m.termWidth, m.termHeight)
 	listContent := lipgloss.NewStyle().
@@ -216,6 +240,9 @@ func (m Model) View() tea.View {
 	}
 }
 
+// Reads installed package names from the local ALPM database
+// Called by SearchList() in search_list.go
+// Returns installedPackages map to SearchList()
 func installedPackageNames() map[string]bool {
 	installedPackages := map[string]bool{}
 	handle, err := alpm.Initialize("/", "/var/lib/pacman/")
