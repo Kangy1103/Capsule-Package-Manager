@@ -26,6 +26,9 @@ type DetailModel struct {
 	Standalone   bool
 }
 
+// Creates the detail model and initialises its viewport
+// Gets packageInfo, selectedRepo, width and height from search or TUI callers
+// Returns DetailModel to DetailedPackageSearch() or Model.Update()
 func DetailView(packageInfo []models.DetailedPackageInfo, selectedRepo, width, height int) (DetailModel, error) {
 	viewPort := viewport.New()
 	initialValues := DetailModel{
@@ -40,6 +43,9 @@ func DetailView(packageInfo []models.DetailedPackageInfo, selectedRepo, width, h
 	return initialValues, nil
 }
 
+// Formats selected package data and resizes the detail viewport
+// Uses packagesList and selectedRepo stored by DetailView() in this file
+// Gets formattedPackage from DetailedPackageOutput() in detail_output.go
 func (m *DetailModel) DetailedViewUpdate(width, height int) error {
 	m.termWidth, m.termHeight = width, height
 	viewPortWidth := detailPanelWidth(width) - 6
@@ -58,6 +64,9 @@ func (m *DetailModel) DetailedViewUpdate(width, height int) error {
 	return nil
 }
 
+// Handles resize, package navigation and exit events for DetailModel
+// Receives msg from Bubble Tea; calls DetailedViewUpdate() in this file
+// Returns updated model and command to Bubble Tea
 func (m DetailModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -91,10 +100,15 @@ func (m DetailModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// Supplies the initial Bubble Tea command for DetailModel
+// Called by Bubble Tea; returns nil
 func (m DetailModel) Init() tea.Cmd {
 	return nil
 }
 
+// Renders DetailModel as a standalone or embedded detail panel
+// Uses model fields set by DetailView() and DetailedViewUpdate() here
+// Returns tea.View to Bubble Tea
 func (m DetailModel) View() tea.View {
 	const (
 		panelBackground = "#151827"
@@ -169,10 +183,16 @@ func (m DetailModel) View() tea.View {
 	return tea.NewView(modal)
 }
 
+// Calculates panel width from terminal width
+// Called by DetailedViewUpdate() and detailPanelSize() here
+// Returns panel width to its caller
 func detailPanelWidth(width int) int {
 	return width * 3 / 4
 }
 
+// Calculates panel dimensions from terminal size and contentLines
+// Called by DetailedViewUpdate() and DetailModel.Update() here
+// Returns panelWidth and panelHeight to the caller
 func detailPanelSize(width, height, contentLines int) (int, int) {
 	panelWidth := detailPanelWidth(width)
 	panelHeight := contentLines + 9
