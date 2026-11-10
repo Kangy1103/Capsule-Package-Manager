@@ -8,6 +8,9 @@ import (
 )
 
 // Saves including word wrap code in the print statements
+// Wraps packagesToWrap to fit width in the details panel
+// Called by DetailedPackageOutput() in detail_output.go
+// Returns wrapped text and error to DetailedPackageOutput()
 func DetailedWrappingHelper(packagesToWrap string, width int) (string, error) {
 	var builder strings.Builder
 
@@ -31,6 +34,9 @@ func DetailedWrappingHelper(packagesToWrap string, width int) (string, error) {
 	return builder.String(), nil
 }
 
+// Replaces empty isNone values with 'None'
+// Called by DetailedPackageOutput() in detail_output.go
+// Returns display text to DetailedPackageOutput()
 func ShowNoneWhereNoData(isNone string) string {
 	if isNone == "" {
 		return "None"
@@ -38,6 +44,9 @@ func ShowNoneWhereNoData(isNone string) string {
 	return isNone
 }
 
+// Formats the matching package's fields as detail text
+// Gets SearchTerm, DetailedPackageInfo and width from DetailedViewUpdate() in detailed_viewport.go
+// Returns formatted text to DetailedViewUpdate() in detailed_viewport.go
 func DetailedPackageOutput(SearchTerm string, DetailedPackageInfo []models.DetailedPackageInfo, width int) (string, error) {
 	var builder strings.Builder
 
