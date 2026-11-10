@@ -13,6 +13,9 @@ import (
 // Switch statement needs optimising when more commands are added
 // For exmaple, SearchTerm coming from elsewhere instead of being read for every case
 // Will also need an error check for os.Args[1]. Possibly showing a help message if "capsule" is ran on it's own
+// Routes os.Args commands to search and package management
+// Gets PackageInfo and handle from FetchPackages() in search/package_fetching.go
+// Passes SearchTerm, PackageInfo and handle to search/ or package_management/ functions
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: capsule <command> [arguments]")
@@ -65,6 +68,9 @@ func main() {
 
 type closeFunc func() error
 
+// Opens Capsule's log file and creates the logger
+// Called by main() in main.go
+// Returns logger and closeLog to main() in main.go
 func Logging() (*log.Logger, closeFunc, error) {
 	logFolder := "/mnt/Goku/capsule/logs"
 	logFile := "/mnt/Goku/capsule/logs/capsule.log"

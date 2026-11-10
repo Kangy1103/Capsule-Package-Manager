@@ -11,6 +11,9 @@ import (
 	"github.com/Jguer/go-alpm/v2"
 )
 
+// Finds searchTerm in pkgs and prepares an ALPM install transaction
+// Gets searchTerm, handle and pkgs from main() in main.go
+// Registers questionHandler() here for transaction conflict questions
 func InstallPackage(searchTerm string, handle *alpm.Handle, pkgs []models.PackageInfo) {
 	var installPkg models.PackageInfo
 	var found bool
@@ -92,6 +95,8 @@ func InstallPackage(searchTerm string, handle *alpm.Handle, pkgs []models.Packag
 	fmt.Println("Installation complete!")
 }
 
+// Placeholder for uninstall support; currently does nothing
+// Called by main() in main.go; no inputs or return value
 func UninstallPackage() {}
 
 type context struct {
@@ -99,6 +104,9 @@ type context struct {
 	checkComplete     bool
 }
 
+// Handles ALPM package-conflict questions during installation
+// Gets ctx and question via callback registered by InstallPackage() here
+// Uses matchesConflictRule() here; sets the ALPM question answer
 func questionHandler(ctx any, question alpm.QuestionAny) {
 	conflictCtx := ctx.(*context)
 	handle := conflictCtx.transactionHandle
@@ -199,6 +207,9 @@ func questionHandler(ctx any, question alpm.QuestionAny) {
 	}
 }
 
+// Checks pkg against conflictRule, including provided package names
+// Called by questionHandler() in install_uninstall.go
+// Returns bool to questionHandler() for conflict decisions
 func matchesConflictRule(pkg alpm.IPackage, conflictRule alpm.Depend) bool {
 	if pkg.Name() == conflictRule.Name {
 		if conflictRule.Version == "" {

@@ -13,6 +13,9 @@ import (
 	pacmanconf "github.com/Morganamilo/go-pacmanconf"
 )
 
+// Reads pacman.conf and collects package data from ALPM sync databases
+// Called by main() in main.go; uses Root and DBPath from config/config.go
+// Returns PackageInfo and handle to main() in main.go
 func FetchPackages() ([]models.PackageInfo, *alpm.Handle, error) {
 	PackageInfo := []models.PackageInfo{}
 
@@ -82,6 +85,9 @@ func FetchPackages() ([]models.PackageInfo, *alpm.Handle, error) {
 	return PackageInfo, handle, nil
 }
 
+// Converts deps from ALPM into a comma-separated string
+// Called by FetchPackages() in package_fetching.go
+// Returns formatted dependencies for PackageInfo.DependsOn and related fields
 func formatDependencies(deps alpm.IDependList) string {
 	depsSlice := deps.Slice()
 	depsString := []string{}
@@ -92,12 +98,18 @@ func formatDependencies(deps alpm.IDependList) string {
 	return strings.Join(depsString, ", ")
 }
 
+// Converts fileSize from ALPM bytes to MiB text
+// Called by FetchPackages() in package_fetching.go
+// Returns formatted sizes for PackageInfo fields
 func formatFileSize(fileSize int64) string {
 	fileSizeBytes := float64(fileSize)
 	fileSizeMiB := fileSizeBytes / 1024 / 1024
 	return fmt.Sprintf("%.2f MiB", fileSizeMiB)
 }
 
+// Converts ALPM validation flags into readable text
+// Gets validation from FetchPackages() in package_fetching.go
+// Returns text for PackageInfo.ValidatedBy
 func formatValidatedBy(validation alpm.Validation) string {
 	validatedByString := []string{}
 	if validation&alpm.ValidationSHA256Sum != 0 {
