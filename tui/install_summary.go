@@ -21,6 +21,9 @@ type InstallSummary struct {
 	Remove []InstallSummaryRow
 }
 
+// Builds the text preview for an InstallSummary
+// Uses totals, counts and row helpers in install_summary.go
+// Returns rendered summary string; currently has no caller elsewhere
 func RenderInstallSummary(summary InstallSummary) string {
 	lines := []string{}
 	downloadSize, installedSize, previousSize := installSummaryTotals(summary)
@@ -48,10 +51,16 @@ func RenderInstallSummary(summary InstallSummary) string {
 	return strings.Join(lines, "\n")
 }
 
+// Formats number of bytes as MiB
+// Called by RenderInstallSummary(), signed() and installSummaryRows() here
+// Returns formatted size string
 func mib(number int64) string {
 	return fmt.Sprintf("%.2f MiB", float64(number)/(1024*1024))
 }
 
+// Formats signed size changes from n
+// Called by RenderInstallSummary() and installSummaryRows() here
+// Returns formatted size string
 func signed(n int64) string {
 	if n < 0 {
 		return "−" + mib(-n)
@@ -59,6 +68,9 @@ func signed(n int64) string {
 	return mib(n)
 }
 
+// Totals download and disk sizes from instSummary
+// Called by RenderInstallSummary() in install_summary.go
+// Returns downloadSize, installedSize and previousSize
 func installSummaryTotals(instSummary InstallSummary) (int64, int64, int64) {
 	var downloadSize int64
 	var installedSize int64
@@ -76,6 +88,9 @@ func installSummaryTotals(instSummary InstallSummary) (int64, int64, int64) {
 	return downloadSize, installedSize, previousSize
 }
 
+// Counts installs, upgrades and reinstalls in instSummary
+// Called by RenderInstallSummary() in install_summary.go
+// Returns counts and packages with unchanged versions
 func installedSummaryCounts(instSummary InstallSummary) (int, int, int, []string) {
 	installs := 0
 	reinstalls := 0
@@ -94,6 +109,9 @@ func installedSummaryCounts(instSummary InstallSummary) (int, int, int, []string
 	return installs, upgrades, reinstalls, packages
 }
 
+// Builds table rows from instSummary
+// Called by RenderInstallSummary() in install_summary.go
+// Returns buildRows to RenderInstallSummary()
 func installSummaryRows(instSummary InstallSummary) [][]string {
 	headerRow := []string{"Package", "Installed Version", "New Version", "Net Change", "Download"}
 	buildRows := [][]string{}
@@ -118,6 +136,9 @@ func installSummaryRows(instSummary InstallSummary) [][]string {
 	return buildRows
 }
 
+// Measures display widths for summaryRows
+// Called by RenderInstallSummary() in install_summary.go
+// Returns columnWidth for installSummaryFormatRows() here
 func installSummaryColumnWidths(summaryRows [][]string) []int {
 	columnWidth := make([]int, len(summaryRows[0]))
 
@@ -132,6 +153,9 @@ func installSummaryColumnWidths(summaryRows [][]string) []int {
 	return columnWidth
 }
 
+// Pads summaryRows using columnWidths for aligned output
+// Called by RenderInstallSummary() in install_summary.go
+// Returns completeLines to RenderInstallSummary()
 func installSummaryFormatRows(summaryRows [][]string, columnWidths []int) []string {
 	completeLines := []string{}
 
